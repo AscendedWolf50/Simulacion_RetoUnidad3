@@ -1,4 +1,4 @@
-# U3 · Forces Instrument
+# U3 · Forces Instrument .
 
 [App desplegada](https://juanferfranco.github.io/forces-instrument-u3/)
 

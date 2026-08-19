@@ -1,8 +1,6 @@
 import * as THREE from 'three/webgpu';
 import { uniform } from 'three/tsl';
 
-// Uniforms are CPU-side values that TSL exposes to the GPU.
-// Changing .value does not rebuild the compute shader.
 export function createParameters() {
   return {
     dt: uniform(1 / 60),
@@ -24,6 +22,22 @@ export function createParameters() {
     vortexStrength: uniform(1.4),
 
     dragEnabled: uniform(1.0),
-    dragCoefficient: uniform(0.12)
+    dragCoefficient: uniform(0.12),
+
+    time: uniform(0.0),
+    turbulenceEnabled: uniform(0.0),
+    turbulenceStrength: uniform(3.5),
+    turbulenceFrequency: uniform(0.8),
+
+    gridEnabled: uniform(0.0),
+    elasticConstant: uniform(3.5),
+
+    // ONDA EXPANSIVA MÁS FUERTE
+    shockwaveEnabled: uniform(0.0),
+    shockwaveStrength: uniform(50.0),
+
+    // NUEVO: RETORNO AL ORIGEN
+    returnEnabled: uniform(0.0),
+    returnForce: uniform(8.0)
   };
 }

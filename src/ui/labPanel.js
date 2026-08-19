@@ -71,6 +71,23 @@ export function createLabPanel({ params, onReset, onPreset, onModeChange, onPaus
     <p>LAB: aísla fuerzas, predice y prueba. <strong>P</strong> cambia a PERFORMANCE.</p>
   `;
 
+  const shortcuts = document.createElement('div');
+  shortcuts.className = 'group';
+  shortcuts.innerHTML = `
+    <h2>Controles de Performance</h2>
+    <ul style="padding-left:16px; margin:4px 0;">
+      <li><strong>Tecla C:</strong> Imán colapsador (Agujero Negro)</li>
+      <li><strong>Tecla B:</strong> Retorno al origen (Recall)</li>
+      <li><strong>Tecla T:</strong> Turbulencia de fluido</li>
+      <li><strong>Tecla G:</strong> Malla Elástica (Resorte)</li>
+      <li><strong>Tecla E:</strong> Onda Expansiva (Shockwave)</li>
+      <li><strong>Shift:</strong> Tape Stop / Freno súbito</li>
+      <li><strong>Espacio:</strong> Invertir Atracción/Repulsión</li>
+      <li><strong>1..5:</strong> Presets base (Cortes directos)</li>
+    </ul>
+  `;
+  panel.append(shortcuts);
+
   const sim = document.createElement('div');
   sim.className = 'group';
   sim.innerHTML = '<h2>Simulación</h2>';
@@ -84,7 +101,12 @@ export function createLabPanel({ params, onReset, onPreset, onModeChange, onPaus
     vortexStrength: params.vortexStrength.value,
     dragCoefficient: params.dragCoefficient.value,
     windX: params.wind.value.x,
-    windY: params.wind.value.y
+    windY: params.wind.value.y,
+    turbulenceStrength: params.turbulenceStrength.value,
+    turbulenceFrequency: params.turbulenceFrequency.value,
+    elasticConstant: params.elasticConstant.value,
+    shockwaveStrength: params.shockwaveStrength.value,
+    returnForce: params.returnForce.value
   };
 
   refreshers.push(rangeRow(sim, 'timeScale', state, 'timeScale', 0, 2, 0.01, (v) => params.timeScale.value = v, () => params.timeScale.value));
@@ -105,6 +127,18 @@ export function createLabPanel({ params, onReset, onPreset, onModeChange, onPaus
   refreshers.push(checkRow(force, 'Viento', params.windEnabled.value > 0, (v) => params.windEnabled.value = v ? 1 : 0, () => params.windEnabled.value > 0));
   refreshers.push(rangeRow(force, 'wind.x', state, 'windX', -4, 4, 0.05, (v) => params.wind.value.x = v, () => params.wind.value.x));
   refreshers.push(rangeRow(force, 'wind.y', state, 'windY', -4, 4, 0.05, (v) => params.wind.value.y = v, () => params.wind.value.y));
+  
+  refreshers.push(checkRow(force, 'Turbulencia', params.turbulenceEnabled.value > 0, (v) => params.turbulenceEnabled.value = v ? 1 : 0, () => params.turbulenceEnabled.value > 0));
+  refreshers.push(rangeRow(force, 'turbStrength', state, 'turbulenceStrength', -10, 10, 0.1, (v) => params.turbulenceStrength.value = v, () => params.turbulenceStrength.value));
+  
+  refreshers.push(checkRow(force, 'Malla Elástica', params.gridEnabled.value > 0, (v) => params.gridEnabled.value = v ? 1 : 0, () => params.gridEnabled.value > 0));
+  
+  refreshers.push(checkRow(force, 'Onda Expansiva', params.shockwaveEnabled.value > 0, (v) => params.shockwaveEnabled.value = v ? 1 : 0, () => params.shockwaveEnabled.value > 0));
+  refreshers.push(rangeRow(force, 'Fuerza Onda', state, 'shockwaveStrength', 1, 150, 1.0, (v) => params.shockwaveStrength.value = v, () => params.shockwaveStrength.value)); // Rango ampliado
+
+  refreshers.push(checkRow(force, 'Retorno al Origen', params.returnEnabled.value > 0, (v) => params.returnEnabled.value = v ? 1 : 0, () => params.returnEnabled.value > 0));
+  refreshers.push(rangeRow(force, 'Fuerza Retorno', state, 'returnForce', 1, 20, 0.5, (v) => params.returnForce.value = v, () => params.returnForce.value));
+
 
   const tests = document.createElement('div');
   tests.className = 'group';

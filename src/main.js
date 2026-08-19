@@ -7,20 +7,7 @@ import { createParameters } from './simulation/parameters.js';
 import { createSimulation } from './simulation/createSimulation.js';
 import { createLabPanel } from './ui/labPanel.js';
 
-/*
-2^15: 32768
-2^16: 65536
-2^17: 131072
-2^18: 262144
-2^19: 524288
-2^20: 1048576
-2^21: 2097152
-2^22: 4194304
-2^23: 8388608
-2^24: 16777216
-*/
-
-const PARTICLE_COUNT = 131072; //2^17. Increase only after measuring performance.
+const PARTICLE_COUNT = 131072; 
 
 async function main() {
   const mount = document.querySelector('#app');
@@ -30,7 +17,6 @@ async function main() {
     throw new Error('Este proyecto requiere WebGPU para ejecutar compute shaders.');
   }
 
-  // THREE.JS MENTAL MODEL: scene + camera + renderer ---------------------
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#050607');
 
@@ -50,7 +36,6 @@ async function main() {
   const params = createParameters();
   const simulation = createSimulation({ renderer, scene, params, count: PARTICLE_COUNT });
 
-  // LAB HELPERS -----------------------------------------------------------
   const attractorHelper = new THREE.Mesh(
     new THREE.SphereGeometry(0.12, 16, 12),
     new THREE.MeshBasicMaterial({ color: '#ffffff' })
@@ -59,8 +44,6 @@ async function main() {
   const axes = new THREE.AxesHelper(1.5);
   scene.add(axes);
 
-  // POINTER -> WORLD POSITION --------------------------------------------
-  // This is a useful camera concept: screen coordinates are not world coords.
   const pointerNdc = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
   const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -79,14 +62,29 @@ async function main() {
   let paused = false;
   let mode = 'LAB';
   let panel;
+  
   let savedRadialStrength = params.radialStrength.value;
   let savedRadialEnabled = params.radialEnabled.value;
+  let originalRadialEnabled = params.radialEnabled.value;
+  let originalRadialStrength = params.radialStrength.value;
+  let originalDrag = params.dragCoefficient.value;
+
+  const envTargets = {
+    turbulence: 0.0,
+    grid: 0.0,
+    shockwave: 0.0,
+    returnHome: 0.0 // NUEVA ENVOLVENTE
+  };
 
   const applyPreset = (id) => {
     params.windEnabled.value = 0;
     params.radialEnabled.value = 0;
     params.vortexEnabled.value = 0;
     params.dragEnabled.value = 0;
+    params.turbulenceEnabled.value = 0; 
+    params.gridEnabled.value = 0;
+    params.shockwaveEnabled.value = 0;
+    params.returnEnabled.value = 0;
     params.wind.value.set(0, 0, 0);
     params.initialSpeed.value = 0;
 
@@ -119,11 +117,9 @@ async function main() {
     panel.setVisible(lab);
     axes.visible = lab;
     attractorHelper.visible = lab;
-    //orbit.enabled = lab;
     hud.innerHTML = lab
       ? '<strong>LAB</strong> · P: performance · R: reset · 1–5: pruebas'
-      //: '<strong>PERFORMANCE</strong> · P: lab · espacio: invertir radial · puntero: atractor';
-      : '';
+      : '<strong>PERFORMANCE</strong> · C: Imán · B: Retorno · T: Turb · G: Grilla · E: Onda · Shift: Stop';
   };
 
   panel = createLabPanel({
@@ -139,34 +135,70 @@ async function main() {
   document.body.append(hud);
   setMode('LAB');
 
-  // BASELINE LIVE INSTRUMENT MAPPING -------------------------------------
-  // Students are expected to redesign this mapping for their own instrument.
+  // KEYDOWN
   addEventListener('keydown', (event) => {
-    //console.log('radial inverted', params.radialStrength.value);
     if (event.repeat) return;
     if (event.code === 'KeyP') setMode(mode === 'LAB' ? 'PERFORMANCE' : 'LAB');
     if (event.code === 'KeyR') simulation.reset();
-    if (event.code === 'Digit1') applyPreset('inertia');
-    if (event.code === 'Digit2') applyPreset('wind');
-    if (event.code === 'Digit3') applyPreset('attract');
-    if (event.code === 'Digit4') applyPreset('repel');
-    if (event.code === 'Digit5') applyPreset('vortex');
+    
+    const presetMap = {
+      'Digit1': 'inertia', 'Digit2': 'wind', 'Digit3': 'attract',
+      'Digit4': 'repel', 'Digit5': 'vortex'
+    };
+    if (presetMap[event.code]) {
+      applyPreset(presetMap[event.code]);
+    }
+    
+    if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
+      params.timeScale.value = 0.05; 
+      params.dragCoefficient.value = 5.0; 
+    }
+
+    if (event.code === 'KeyC') {
+      originalRadialEnabled = params.radialEnabled.value;
+      originalRadialStrength = params.radialStrength.value;
+      originalDrag = params.dragCoefficient.value;
+      
+      params.radialEnabled.value = 1;
+      params.radialStrength.value = 150.0; 
+      params.dragCoefficient.value = 0.2; 
+    }
+
+    if (event.code === 'KeyB') envTargets.returnHome = 1.0; // Enciende interpolación fuerte de regreso
+    if (event.code === 'KeyT') envTargets.turbulence = 1.0;
+    if (event.code === 'KeyG') envTargets.grid = 1.0;
+    if (event.code === 'KeyE') envTargets.shockwave = 1.0; 
 
     if (event.code === 'Space') {
       event.preventDefault();
-      //savedRadialStrength = params.radialStrength.value || 2.0;
       savedRadialStrength = params.radialStrength.value;
       savedRadialEnabled = params.radialEnabled.value;
       params.radialEnabled.value = 1;
       params.radialStrength.value = -(savedRadialStrength || 2.0);
-      //console.log('radial inverted', params.radialStrength.value);
     }
   });
 
+  // KEYUP
   addEventListener('keyup', (event) => {
+    if (event.code === 'KeyB') envTargets.returnHome = 0.0;
+    if (event.code === 'KeyT') envTargets.turbulence = 0.0;
+    if (event.code === 'KeyG') envTargets.grid = 0.0;
+    if (event.code === 'KeyE') envTargets.shockwave = 0.0;
+
+    if (event.code === 'KeyC') {
+      params.radialEnabled.value = originalRadialEnabled;
+      params.radialStrength.value = originalRadialStrength;
+      params.dragCoefficient.value = originalDrag;
+    }
+
     if (event.code === 'Space') {
       params.radialEnabled.value = savedRadialEnabled;
       params.radialStrength.value = savedRadialStrength;
+    }
+
+    if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
+      params.timeScale.value = 1.0;
+      params.dragCoefficient.value = 0.12; 
     }
   });
 
@@ -178,9 +210,22 @@ async function main() {
 
   simulation.reset();
 
-  // FRAME LOOP ------------------------------------------------------------
+  // FRAME LOOP
   renderer.setAnimationLoop(() => {
-    if (!paused) simulation.stepSimulation();
+    if (!paused) {
+      params.time.value += params.dt.value * params.timeScale.value;
+
+      params.turbulenceEnabled.value += (envTargets.turbulence - params.turbulenceEnabled.value) * 0.05;
+      params.gridEnabled.value += (envTargets.grid - params.gridEnabled.value) * 0.1;
+      
+      // La onda expansiva es un latigazo rápido
+      params.shockwaveEnabled.value += (envTargets.shockwave - params.shockwaveEnabled.value) * 0.25;
+      
+      // Interpolación súper fuerte hacia la posición inicial
+      params.returnEnabled.value += (envTargets.returnHome - params.returnEnabled.value) * 0.15;
+
+      simulation.stepSimulation();
+    }
     orbit.update();
     renderer.render(scene, camera);
   });

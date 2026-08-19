@@ -73,7 +73,7 @@ async function main() {
     turbulence: 0.0,
     grid: 0.0,
     shockwave: 0.0,
-    returnHome: 0.0 // NUEVA ENVOLVENTE
+    returnHome: 0.0
   };
 
   const applyPreset = (id) => {
@@ -119,7 +119,7 @@ async function main() {
     attractorHelper.visible = lab;
     hud.innerHTML = lab
       ? '<strong>LAB</strong> · P: performance · R: reset · 1–5: pruebas'
-      : '<strong>PERFORMANCE</strong> · C: Imán · B: Retorno · T: Turb · G: Grilla · E: Onda · Shift: Stop';
+      : '<strong>PERFORMANCE</strong> · C: Imán · B: Retorno · T: Turb · G: Grilla · E: Onda · X: Pulso · Shift: Slowmo';
   };
 
   panel = createLabPanel({
@@ -149,9 +149,10 @@ async function main() {
       applyPreset(presetMap[event.code]);
     }
     
+    // CÁMARA LENTA en lugar de Freno
     if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
-      params.timeScale.value = 0.05; 
-      params.dragCoefficient.value = 5.0; 
+      params.timeScale.value = 0.3; // Mantiene el 30% de la velocidad
+      params.dragCoefficient.value = 0.4; // Añade un poco de fricción sin detenerlas por completo
     }
 
     if (event.code === 'KeyC') {
@@ -164,7 +165,12 @@ async function main() {
       params.dragCoefficient.value = 0.2; 
     }
 
-    if (event.code === 'KeyB') envTargets.returnHome = 1.0; // Enciende interpolación fuerte de regreso
+    // PULSO RÍTMICO
+    if (event.code === 'KeyX') {
+      params.sizeMultiplier.value = 3.5;
+    }
+
+    if (event.code === 'KeyB') envTargets.returnHome = 1.0; 
     if (event.code === 'KeyT') envTargets.turbulence = 1.0;
     if (event.code === 'KeyG') envTargets.grid = 1.0;
     if (event.code === 'KeyE') envTargets.shockwave = 1.0; 
@@ -196,6 +202,7 @@ async function main() {
       params.radialStrength.value = savedRadialStrength;
     }
 
+    // Restaurar de la Cámara Lenta
     if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
       params.timeScale.value = 1.0;
       params.dragCoefficient.value = 0.12; 
@@ -217,12 +224,11 @@ async function main() {
 
       params.turbulenceEnabled.value += (envTargets.turbulence - params.turbulenceEnabled.value) * 0.05;
       params.gridEnabled.value += (envTargets.grid - params.gridEnabled.value) * 0.1;
-      
-      // La onda expansiva es un latigazo rápido
       params.shockwaveEnabled.value += (envTargets.shockwave - params.shockwaveEnabled.value) * 0.25;
-      
-      // Interpolación súper fuerte hacia la posición inicial
       params.returnEnabled.value += (envTargets.returnHome - params.returnEnabled.value) * 0.15;
+      
+      // Decay para que el tamaño regrese a su valor normal (1.0) suavemente
+      params.sizeMultiplier.value += (1.0 - params.sizeMultiplier.value) * 0.1;
 
       simulation.stepSimulation();
     }

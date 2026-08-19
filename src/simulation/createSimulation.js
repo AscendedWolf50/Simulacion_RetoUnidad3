@@ -91,13 +91,11 @@ export function createSimulation({ renderer, scene, params, count = 131072 }) {
     force.addAssign(shockForce);
 
     // 8) FUERZA DE RETORNO AL ORIGEN (RECALL)
-    // Reconstruimos la coordenada de nacimiento de esta partícula específica
     const r1 = hash(i.add(uint(11)));
     const r2 = hash(i.add(uint(23)));
     const r3 = hash(i.add(uint(37)));
     const originalPos = vec3(r1, r2, r3).sub(0.5).mul(params.boundsSize.mul(0.45));
     
-    // Fuerza de resorte hacia esa coordenada
     const returnDir = originalPos.sub(p);
     const returnForce = returnDir.mul(params.returnForce).mul(params.returnEnabled);
     force.addAssign(returnForce);
@@ -123,7 +121,8 @@ export function createSimulation({ renderer, scene, params, count = 131072 }) {
   });
 
   material.positionNode = positionBuffer.toAttribute();
-  material.scaleNode = params.particleSize;
+  // AQUÍ APLICAMOS EL MULTIPLICADOR
+  material.scaleNode = params.particleSize.mul(params.sizeMultiplier);
 
   material.colorNode = Fn(() => {
     const speed = velocityBuffer.toAttribute().length();

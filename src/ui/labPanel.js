@@ -81,7 +81,8 @@ export function createLabPanel({ params, onReset, onPreset, onModeChange, onPaus
       <li><strong>Tecla T:</strong> Turbulencia de fluido</li>
       <li><strong>Tecla G:</strong> Malla Elástica (Resorte)</li>
       <li><strong>Tecla E:</strong> Onda Expansiva (Shockwave)</li>
-      <li><strong>Shift:</strong> Tape Stop / Freno súbito</li>
+      <li><strong>Tecla X:</strong> Pulso rítmico (Beat Size)</li>
+      <li><strong>Shift:</strong> Cámara Lenta (Slow-mo)</li>
       <li><strong>Espacio:</strong> Invertir Atracción/Repulsión</li>
       <li><strong>1..5:</strong> Presets base (Cortes directos)</li>
     </ul>

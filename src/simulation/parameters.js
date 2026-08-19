@@ -9,6 +9,9 @@ export function createParameters() {
     maxSpeed: uniform(5.0),
     boundsSize: uniform(10.0),
     particleSize: uniform(0.035),
+    
+    // NUEVO: Multiplicador para el pulso rítmico
+    sizeMultiplier: uniform(1.0),
 
     windEnabled: uniform(0.0),
     wind: uniform(new THREE.Vector3(0.0, 0.0, 0.0)),
@@ -32,11 +35,9 @@ export function createParameters() {
     gridEnabled: uniform(0.0),
     elasticConstant: uniform(3.5),
 
-    // ONDA EXPANSIVA MÁS FUERTE
     shockwaveEnabled: uniform(0.0),
     shockwaveStrength: uniform(50.0),
 
-    // NUEVO: RETORNO AL ORIGEN
     returnEnabled: uniform(0.0),
     returnForce: uniform(8.0)
   };

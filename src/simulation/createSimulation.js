@@ -46,10 +46,8 @@ export function createSimulation({ renderer, scene, params, count = 131072 }) {
     const dt = params.dt.mul(params.timeScale);
     const force = vec3(0.0).toVar();
 
-    // 1) CONSTANT / WIND FORCE
     force.addAssign(params.wind.mul(params.windEnabled));
 
-    // 2) RADIAL FORCE
     const toAttractor = params.attractor.sub(p);
     const distance = max(toAttractor.length(), params.softening);
     const radialDirection = toAttractor.div(distance);
@@ -59,15 +57,12 @@ export function createSimulation({ renderer, scene, params, count = 131072 }) {
       .mul(params.radialEnabled);
     force.addAssign(radialForce);
 
-    // 3) VORTEX FORCE
     const zAxis = vec3(0.0, 0.0, 1.0);
     const tangent = zAxis.cross(radialDirection);
     force.addAssign(tangent.mul(params.vortexStrength).mul(params.vortexEnabled));
 
-    // 4) LINEAR DRAG
     force.addAssign(v.mul(params.dragCoefficient).mul(params.dragEnabled).mul(-1.0));
 
-    // 5) RUIDO DE FLUIDO / TURBULENCIA
     const t = params.time.mul(2.0); 
     const freq = params.turbulenceFrequency;
     const turbForce = vec3(
@@ -77,20 +72,17 @@ export function createSimulation({ renderer, scene, params, count = 131072 }) {
     ).mul(params.turbulenceStrength).mul(params.turbulenceEnabled);
     force.addAssign(turbForce);
 
-    // 6) FUERZA DE MALLA ELÁSTICA
     const gridSize = vec3(0.5); 
     const gridTarget = p.div(gridSize).round().mul(gridSize);
     const displacement = p.sub(gridTarget);
     const springForce = displacement.mul(-1.0).mul(params.elasticConstant).mul(params.gridEnabled);
     force.addAssign(springForce);
 
-    // 7) ONDA EXPANSIVA (SHOCKWAVE)
     const centerDist = max(p.length(), 0.1);
     const shockDir = p.div(centerDist);
     const shockForce = shockDir.mul(params.shockwaveStrength).div(centerDist).mul(params.shockwaveEnabled);
     force.addAssign(shockForce);
 
-    // 8) FUERZA DE RETORNO AL ORIGEN (RECALL)
     const r1 = hash(i.add(uint(11)));
     const r2 = hash(i.add(uint(23)));
     const r3 = hash(i.add(uint(37)));
@@ -100,7 +92,6 @@ export function createSimulation({ renderer, scene, params, count = 131072 }) {
     const returnForce = returnDir.mul(params.returnForce).mul(params.returnEnabled);
     force.addAssign(returnForce);
 
-    // INTEGRATION ---------------------------------------------------------
     v.addAssign(force.mul(dt));
 
     const speed = v.length();
@@ -121,7 +112,6 @@ export function createSimulation({ renderer, scene, params, count = 131072 }) {
   });
 
   material.positionNode = positionBuffer.toAttribute();
-  // AQUÍ APLICAMOS EL MULTIPLICADOR
   material.scaleNode = params.particleSize.mul(params.sizeMultiplier);
 
   material.colorNode = Fn(() => {
@@ -133,8 +123,9 @@ export function createSimulation({ renderer, scene, params, count = 131072 }) {
     const g = cos(p.y.mul(1.5).add(params.time)).mul(0.5).add(0.5);
     const b = sin(p.x.sub(p.y).add(params.time)).mul(0.5).add(0.5);
     
-    const slowColor = vec3(r, g, b).mul(0.6);
-    const fastColor = vec3(1.0, r, 1.0);
+    // CAMBIO APLICADO AQUÍ: Multiplicamos por params.colorTint
+    const slowColor = vec3(r, g, b).mul(0.6).mul(params.colorTint);
+    const fastColor = vec3(1.0, r, 1.0).mul(params.colorTint);
 
     return vec4(mix(slowColor, fastColor, t), 1.0);
   })();

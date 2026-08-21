@@ -82,6 +82,7 @@ export function createLabPanel({ params, onReset, onPreset, onModeChange, onPaus
       <li><strong>Tecla G:</strong> Malla Elástica (Resorte)</li>
       <li><strong>Tecla E:</strong> Onda Expansiva (Shockwave)</li>
       <li><strong>Tecla X:</strong> Pulso rítmico (Beat Size)</li>
+      <li><strong>Tecla V:</strong> Cambiar Paleta de Color</li>
       <li><strong>Shift:</strong> Cámara Lenta (Slow-mo)</li>
       <li><strong>Espacio:</strong> Invertir Atracción/Repulsión</li>
       <li><strong>1..5:</strong> Presets base (Cortes directos)</li>
@@ -135,11 +136,10 @@ export function createLabPanel({ params, onReset, onPreset, onModeChange, onPaus
   refreshers.push(checkRow(force, 'Malla Elástica', params.gridEnabled.value > 0, (v) => params.gridEnabled.value = v ? 1 : 0, () => params.gridEnabled.value > 0));
   
   refreshers.push(checkRow(force, 'Onda Expansiva', params.shockwaveEnabled.value > 0, (v) => params.shockwaveEnabled.value = v ? 1 : 0, () => params.shockwaveEnabled.value > 0));
-  refreshers.push(rangeRow(force, 'Fuerza Onda', state, 'shockwaveStrength', 1, 150, 1.0, (v) => params.shockwaveStrength.value = v, () => params.shockwaveStrength.value)); // Rango ampliado
+  refreshers.push(rangeRow(force, 'Fuerza Onda', state, 'shockwaveStrength', 1, 150, 1.0, (v) => params.shockwaveStrength.value = v, () => params.shockwaveStrength.value)); 
 
   refreshers.push(checkRow(force, 'Retorno al Origen', params.returnEnabled.value > 0, (v) => params.returnEnabled.value = v ? 1 : 0, () => params.returnEnabled.value > 0));
   refreshers.push(rangeRow(force, 'Fuerza Retorno', state, 'returnForce', 1, 20, 0.5, (v) => params.returnForce.value = v, () => params.returnForce.value));
-
 
   const tests = document.createElement('div');
   tests.className = 'group';

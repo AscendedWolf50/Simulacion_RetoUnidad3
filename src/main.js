@@ -69,6 +69,18 @@ async function main() {
   let originalRadialStrength = params.radialStrength.value;
   let originalDrag = params.dragCoefficient.value;
 
+  // NUEVO: Paletas de color "padre" y lógica de transición
+  const colorPalettes = [
+    new THREE.Vector3(1.0, 1.0, 1.0), // 0: Original/Base (Multicolor completo)
+    new THREE.Vector3(2.5, 0.2, 0.2), // 1: Rojo intenso
+    new THREE.Vector3(0.2, 2.5, 0.2), // 2: Verde Neón
+    new THREE.Vector3(0.2, 0.8, 3.0), // 3: Azul profundo
+    new THREE.Vector3(3.0, 1.5, 0.2), // 4: Fuego / Naranja dorado
+    new THREE.Vector3(2.5, 0.2, 3.0)  // 5: Magenta / Cyberpunk
+  ];
+  let currentPaletteIdx = 0;
+  const targetColorTint = new THREE.Vector3(1.0, 1.0, 1.0); // A donde viaja el color
+
   const envTargets = {
     turbulence: 0.0,
     grid: 0.0,
@@ -119,7 +131,7 @@ async function main() {
     attractorHelper.visible = lab;
     hud.innerHTML = lab
       ? '<strong>LAB</strong> · P: performance · R: reset · 1–5: pruebas'
-      : '<strong>PERFORMANCE</strong> · C: Imán · B: Retorno · T: Turb · G: Grilla · E: Onda · X: Pulso · Shift: Slowmo';
+      : '<strong>PERFORMANCE</strong> · C: Imán · B: Retorno · E: Onda · X: Pulso · V: Color · Shift: Slowmo';
   };
 
   panel = createLabPanel({
@@ -149,10 +161,9 @@ async function main() {
       applyPreset(presetMap[event.code]);
     }
     
-    // CÁMARA LENTA en lugar de Freno
     if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
-      params.timeScale.value = 0.3; // Mantiene el 30% de la velocidad
-      params.dragCoefficient.value = 0.4; // Añade un poco de fricción sin detenerlas por completo
+      params.timeScale.value = 0.3; 
+      params.dragCoefficient.value = 0.4; 
     }
 
     if (event.code === 'KeyC') {
@@ -165,9 +176,14 @@ async function main() {
       params.dragCoefficient.value = 0.2; 
     }
 
-    // PULSO RÍTMICO
     if (event.code === 'KeyX') {
       params.sizeMultiplier.value = 3.5;
+    }
+
+    // CAMBIAR COLOR (Tecla V)
+    if (event.code === 'KeyV') {
+      currentPaletteIdx = (currentPaletteIdx + 1) % colorPalettes.length;
+      targetColorTint.copy(colorPalettes[currentPaletteIdx]);
     }
 
     if (event.code === 'KeyB') envTargets.returnHome = 1.0; 
@@ -202,7 +218,6 @@ async function main() {
       params.radialStrength.value = savedRadialStrength;
     }
 
-    // Restaurar de la Cámara Lenta
     if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
       params.timeScale.value = 1.0;
       params.dragCoefficient.value = 0.12; 
@@ -227,8 +242,10 @@ async function main() {
       params.shockwaveEnabled.value += (envTargets.shockwave - params.shockwaveEnabled.value) * 0.25;
       params.returnEnabled.value += (envTargets.returnHome - params.returnEnabled.value) * 0.15;
       
-      // Decay para que el tamaño regrese a su valor normal (1.0) suavemente
       params.sizeMultiplier.value += (1.0 - params.sizeMultiplier.value) * 0.1;
+
+      // INTERPOLACIÓN SUAVE DEL COLOR PADRE
+      params.colorTint.value.lerp(targetColorTint, 0.05);
 
       simulation.stepSimulation();
     }

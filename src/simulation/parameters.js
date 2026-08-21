@@ -10,7 +10,7 @@ export function createParameters() {
     boundsSize: uniform(10.0),
     particleSize: uniform(0.035),
     
-    // NUEVO: Multiplicador para el pulso rítmico
+    // Multiplicador para el pulso rítmico
     sizeMultiplier: uniform(1.0),
 
     windEnabled: uniform(0.0),
@@ -39,6 +39,9 @@ export function createParameters() {
     shockwaveStrength: uniform(50.0),
 
     returnEnabled: uniform(0.0),
-    returnForce: uniform(8.0)
+    returnForce: uniform(8.0),
+
+    // NUEVO: Color Padre
+    colorTint: uniform(new THREE.Vector3(1.0, 1.0, 1.0))
   };
 }
